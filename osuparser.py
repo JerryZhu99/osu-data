@@ -16,15 +16,6 @@ def parse(data: str) -> dict:
 
     parsed["File Version"] = lines[0]
 
-    general = "[General]"
-    editor = "[Editor]"
-    metadata = "[Metadata]"
-    difficulty = "[Difficulty]"
-    events = "[Events]"
-    timingpoints = "[TimingPoints]"
-    colours = "[Colours]"
-    hitobjects = "[HitObjects]"
-
     def data_range(category: str):
         if category in lines:
             i = lines.index(category)
@@ -35,14 +26,14 @@ def parse(data: str) -> dict:
         else:
             return []
 
-    parsed.update(parse_general(data_range(general)))
-    parsed.update(parse_editor(data_range(editor)))
-    parsed.update(parse_metadata(data_range(metadata)))
-    parsed.update(parse_difficulty(data_range(difficulty)))
-    parsed.update(parse_events(data_range(events)))
-    parsed.update(parse_timingpoints(data_range(timingpoints)))
-    parsed.update(parse_colours(data_range(colours)))
-    parsed.update(parse_hitobjects(data_range(hitobjects)))
+    parsed.update(parse_general(data_range("[General]")))
+    parsed.update(parse_editor(data_range("[Editor]")))
+    parsed.update(parse_metadata(data_range("[Metadata]")))
+    parsed.update(parse_difficulty(data_range("[Difficulty]")))
+    parsed.update(parse_events(data_range("[Events]")))
+    parsed.update(parse_timingpoints(data_range("[TimingPoints]")))
+    parsed.update(parse_colours(data_range("[Colours]")))
+    parsed.update(parse_hitobjects(data_range("[HitObjects]")))
 
     return parsed
 
