@@ -1,11 +1,13 @@
 
 
 def parse_file(path: str) -> dict:
+    """Parses the .osu file at the given path."""
     data = open(path, 'r').read()
     return parse(data)
 
 
 def parse(data: str) -> dict:
+    """Parses the given osu data."""
     parsed = {}
 
     lines = data.split("\n")
@@ -33,6 +35,7 @@ def parse(data: str) -> dict:
 
 def parse_key_vals(lines: [str], strings: [str], integers: [str],
                    decimals: [str], booleans: [str]) -> dict:
+    """Parses the given lines, processing integers, decimals, and booleans."""
     parsed = {}
     for line in lines:
         print(line)
@@ -58,11 +61,12 @@ def parse_general(lines: [str]) -> dict:
 
 def parse_editor(lines: [str]) -> dict:
     strings = ["Bookmarks"]
-    integers = ["BeatDivisor", "GridSize", "TimelineZoom"]
-    decimals = ["DistanceSpacing"]
+    integers = ["BeatDivisor", "GridSize"]
+    decimals = ["DistanceSpacing", "TimelineZoom"]
     booleans = []
     parsed = parse_key_vals(lines, strings, integers, decimals, booleans)
-    parsed["Bookmarks"] = [int(s) for s in parsed["Bookmarks"].split(",")]
+    if "Bookmarks" in parsed:
+        parsed["Bookmarks"] = [int(s) for s in parsed["Bookmarks"].split(",")]
     return parsed
 
 
@@ -73,7 +77,8 @@ def parse_metadata(lines: [str]) -> dict:
     decimals = []
     booleans = []
     parsed = parse_key_vals(lines, strings, integers, decimals, booleans)
-    parsed["Tags"] = parsed["Tags"].split(" ")
+    if "Tags" in parsed:
+        parsed["Tags"] = parsed["Tags"].split(" ")
     return parsed
 
 
