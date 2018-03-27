@@ -1,8 +1,10 @@
+""" A module for parsing .osu files.
+"""
 
 
 def parse_file(path: str) -> dict:
     """Parses the .osu file at the given path."""
-    data = open(path, 'r').read()
+    data = open(path, 'r', encoding="utf8").read()
     return parse(data)
 
 
@@ -10,28 +12,37 @@ def parse(data: str) -> dict:
     """Parses the given osu data."""
     parsed = {}
 
-    lines = data.split("\n")
-    lines = [line for line in lines if not line == ""]
+    lines = [i.strip() for i in data.split("\n")]
 
     parsed["File Version"] = lines[0]
 
-    general = lines.index("[General]")
-    editor = lines.index("[Editor]")
-    metadata = lines.index("[Metadata]")
-    difficulty = lines.index("[Difficulty]")
-    events = lines.index("[Events]")
-    timingpoints = lines.index("[TimingPoints]")
-    colours = lines.index("[Colours]")
-    hitobjects = lines.index("[HitObjects]")
+    general = "[General]"
+    editor = "[Editor]"
+    metadata = "[Metadata]"
+    difficulty = "[Difficulty]"
+    events = "[Events]"
+    timingpoints = "[TimingPoints]"
+    colours = "[Colours]"
+    hitobjects = "[HitObjects]"
 
-    parsed.update(parse_general(lines[general + 1:editor]))
-    parsed.update(parse_editor(lines[editor + 1:metadata]))
-    parsed.update(parse_metadata(lines[metadata + 1:difficulty]))
-    parsed.update(parse_difficulty(lines[difficulty + 1:events]))
-    parsed.update(parse_events(lines[events + 1:timingpoints]))
-    parsed.update(parse_timingpoints(lines[timingpoints + 1:colours]))
-    parsed.update(parse_colours(lines[colours + 1:hitobjects]))
-    parsed.update(parse_hitobjects(lines[hitobjects + 1:]))
+    def data_range(category: str):
+        if category in lines:
+            i = lines.index(category)
+            if "" in lines[i:]:
+                return lines[i + 1: lines.index("", i)]
+            else:
+                return lines[i + 1: len(lines)]
+        else:
+            return []
+
+    parsed.update(parse_general(data_range(general)))
+    parsed.update(parse_editor(data_range(editor)))
+    parsed.update(parse_metadata(data_range(metadata)))
+    parsed.update(parse_difficulty(data_range(difficulty)))
+    parsed.update(parse_events(data_range(events)))
+    parsed.update(parse_timingpoints(data_range(timingpoints)))
+    parsed.update(parse_colours(data_range(colours)))
+    parsed.update(parse_hitobjects(data_range(hitobjects)))
 
     return parsed
 
@@ -41,8 +52,7 @@ def parse_key_vals(lines: [str], strings: [str], integers: [str],
     """Parses the given lines, processing integers, decimals, and booleans."""
     parsed = {}
     for line in lines:
-        print(line)
-        (prop, val) = [s.strip() for s in line.split(":")]
+        (prop, val) = [s.strip() for s in line.split(":", 1)]
         if prop in strings:
             parsed[prop] = val
         elif prop in integers:
@@ -109,7 +119,7 @@ def parse_colours(lines: [str]) -> dict:
 def parse_hitobjects(lines: [str]) -> dict:
     hitobjects = []
     for line in lines:
-        (x, y, time, type_data, hitSounds, extras) = line.split(",", 5)
+        (x, y, time, type_data, hitSounds, *extras) = line.split(",", 5)
         type_data = int(type_data)
         object_type = [1, 0, 0]
         if (type_data & 0x0000010) > 0:
