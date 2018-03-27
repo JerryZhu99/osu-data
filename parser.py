@@ -12,7 +12,7 @@ def parse(data: str) -> dict:
     lines = [line for line in lines if not (
         line.startswith("//") or line == "")]
 
-    parsed["version"] = lines[0]
+    parsed["File Version"] = lines[0]
 
     general = lines.index("[General]")
     editor = lines.index("[Editor]")
@@ -100,6 +100,8 @@ def parse_hitobjects(lines: [str]) -> dict:
 
 if __name__ == "__main__":
     import sys
+    import pprint
     filepath = sys.argv[1]
     parsed = parse_file(filepath)
-    print(parsed)
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(parsed)
