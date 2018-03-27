@@ -30,6 +30,10 @@ def parse(data: str) -> dict:
     parsed.update(parse_metadata(lines[metadata + 1:difficulty]))
     parsed.update(parse_difficulty(lines[difficulty + 1:events]))
     parsed.update(parse_events(lines[events + 1:timingpoints]))
+    parsed.update(parse_timingpoints(lines[timingpoints + 1:colours]))
+    parsed.update(parse_colours(lines[colours + 1:hitobjects]))
+    parsed.update(parse_hitobjects(lines[hitobjects + 1:]))
+
     return parsed
 
 
@@ -99,8 +103,23 @@ def parse_timingpoints(lines: [str]) -> dict:
     return {}
 
 
-def parse_hitobjects(lines: [str]) -> dict:
+def parse_colours(lines: [str]) -> dict:
     return {}
+
+
+def parse_hitobjects(lines: [str]) -> dict:
+    hitobjects = []
+    for line in lines:
+        (x, y, time, Type, hitSounds, extras) = line.split(",", 5)
+        hitobjects.append({
+            "x": int(x),
+            "y": int(y),
+            "time": int(time),
+            "type": int(Type),
+            "hitSounds": int(hitSounds),
+            "extras": extras
+        })
+    return {"HitObjects": hitobjects}
 
 
 if __name__ == "__main__":
