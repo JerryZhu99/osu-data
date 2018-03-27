@@ -11,8 +11,7 @@ def parse(data: str) -> dict:
     parsed = {}
 
     lines = data.split("\n")
-    lines = [line for line in lines if not (
-        line.startswith("//") or line == "")]
+    lines = [line for line in lines if not line == ""]
 
     parsed["File Version"] = lines[0]
 
@@ -110,12 +109,20 @@ def parse_colours(lines: [str]) -> dict:
 def parse_hitobjects(lines: [str]) -> dict:
     hitobjects = []
     for line in lines:
-        (x, y, time, Type, hitSounds, extras) = line.split(",", 5)
+        (x, y, time, type_data, hitSounds, extras) = line.split(",", 5)
+        type_data = int(type_data)
+        object_type = [1, 0, 0]
+        if (type_data & 0x0000010) > 0:
+            object_type = [0, 1, 0]
+        if (type_data & 0x0001000) > 0:
+            object_type = [0, 0, 1]
+
         hitobjects.append({
             "x": int(x),
             "y": int(y),
             "time": int(time),
-            "type": int(Type),
+            "type": object_type,
+            "newCombo": bool(type_data & 0x0000100),
             "hitSounds": int(hitSounds),
             "extras": extras
         })
