@@ -11,8 +11,16 @@ import matplotlib as mpl
 
 import local_data
 
-beatmap_data = local_data.get_beatmaps(sys.argv[1])
-beatmaps = pd.DataFrame(beatmap_data).dropna().to_dict('list')
+beatmaps = {}
+try:
+    beatmaps = pd.read_pickle("data/beatmaps.pkl").dropna()
+except FileNotFoundError:
+    print("Fetching data from " + sys.argv[1])
+    beatmap_data = local_data.get_beatmaps(sys.argv[1])
+    data = pd.DataFrame(beatmap_data)
+    data.to_pickle("data/beatmaps.pkl")
+    beatmaps = data.dropna()
+
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
