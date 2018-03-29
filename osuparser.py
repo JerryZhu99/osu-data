@@ -116,7 +116,6 @@ def parse_timingpoints(lines: [str]) -> dict:
         (offset, ms_per_beat, meter, _, _, _, _, _) = line.split(",")
         ms_per_beat = float(ms_per_beat)
         if ms_per_beat < 0:
-            print(offset, ms_per_beat, meter)
             ms_per_beat = last_ms_per_beat / (-0.01 * ms_per_beat)
         else:
             last_ms_per_beat = ms_per_beat
