@@ -96,11 +96,37 @@ def parse_difficulty(lines: [str]) -> dict:
 
 
 def parse_events(lines: [str]) -> dict:
-    return {}
+    events = {}
+    events["Breaks"] = []
+    start = lines.index("//Break Periods") + 1
+    end = lines.index("//Storyboard Layer 0 (Background)")
+    for line in lines[start:end]:
+        (_, start_time, end_time) = line.split(",")
+        events["Breaks"].append({
+            "start": start_time,
+            "end": end_time
+        })
+    return events
 
 
 def parse_timingpoints(lines: [str]) -> dict:
-    return {}
+    points = []
+    last_ms_per_beat = 0.0
+    for line in lines:
+        (offset, ms_per_beat, meter, _, _, _, _, _) = line.split(",")
+        ms_per_beat = float(ms_per_beat)
+        if ms_per_beat < 0:
+            print(offset, ms_per_beat, meter)
+            ms_per_beat = last_ms_per_beat / (-0.01 * ms_per_beat)
+        else:
+            last_ms_per_beat = ms_per_beat
+        points.append({
+            "time": int(offset),
+            "msPerBeat": ms_per_beat,
+            "bpm": round(60 * 1000 / float(ms_per_beat), 2),
+            "meter": meter
+        })
+    return {"TimingPoints": points}
 
 
 def parse_colours(lines: [str]) -> dict:
@@ -110,23 +136,50 @@ def parse_colours(lines: [str]) -> dict:
 def parse_hitobjects(lines: [str]) -> dict:
     hitobjects = []
     for line in lines:
-        (x, y, time, type_data, hitSounds, *extras) = line.split(",", 5)
+        (x, y, time, type_data, hitSounds, extras) = line.split(",", 5)
         type_data = int(type_data)
-        object_type = [1, 0, 0]
-        if (type_data & 0x0000010) > 0:
-            object_type = [0, 1, 0]
-        if (type_data & 0x0001000) > 0:
-            object_type = [0, 0, 1]
+        object_type = "circle"
+        if (type_data & 0b0000010) > 0:
+            object_type = "slider"
+        if (type_data & 0b0001000) > 0:
+            object_type = "spinner"
 
-        hitobjects.append({
-            "x": int(x),
-            "y": int(y),
-            "time": int(time),
-            "type": object_type,
-            "newCombo": bool(type_data & 0x0000100),
-            "hitSounds": int(hitSounds),
-            "extras": extras
-        })
+        if object_type == "circle":
+            hitobjects.append({
+                "x": int(x),
+                "y": int(y),
+                "time": int(time),
+                "type": object_type,
+                "newCombo": bool(type_data & 0x0000100),
+                "hitSounds": int(hitSounds),
+                "extras": extras
+            })
+        elif object_type == "slider":
+            (slider_points, repeat, pixelLength, *_) = extras.split(",")
+            (slider_type, *points) = slider_points.split("|")
+            points = [p.split(":") for p in points]
+            points = [{"x": p[0], "y": p[1]} for p in points]
+            repeat = int(repeat) - 1
+            pixelLength = float(pixelLength)
+            endx = int(x)
+            endy = int(y)
+            if repeat % 2 == 0:
+                endx = points[-1]["x"]
+                endy = points[-1]["y"]
+            hitobjects.append({
+                "x": int(x),
+                "y": int(y),
+                "time": int(time),
+                "type": object_type,
+                "newCombo": bool(type_data & 0x0000100),
+                "hitSounds": int(hitSounds),
+                "endx": endx,
+                "endy": endy,
+                "slider_type": slider_type,
+                "points": points,
+                "repeat": repeat,
+                "length": pixelLength
+            })
     return {"HitObjects": hitobjects}
 
 
