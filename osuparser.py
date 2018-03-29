@@ -121,10 +121,10 @@ def parse_timingpoints(lines: [str]) -> dict:
         else:
             last_ms_per_beat = ms_per_beat
         points.append({
-            "time": int(offset),
+            "time": float(offset),
             "msPerBeat": ms_per_beat,
             "bpm": round(60 * 1000 / float(ms_per_beat), 2),
-            "meter": meter
+            "meter": int(meter)
         })
     return {"TimingPoints": points}
 
@@ -136,7 +136,12 @@ def parse_colours(lines: [str]) -> dict:
 def parse_hitobjects(lines: [str]) -> dict:
     hitobjects = []
     for line in lines:
-        (x, y, time, type_data, hitSounds, extras) = line.split(",", 5)
+        items = line.split(",")
+        if(len(items) == 5):
+            (x, y, time, type_data, hitSounds) = items
+            extras = ""
+        else:
+            (x, y, time, type_data, hitSounds, extras) = line.split(",", 5)
         type_data = int(type_data)
         object_type = "circle"
         if (type_data & 0b0000010) > 0:
@@ -144,7 +149,7 @@ def parse_hitobjects(lines: [str]) -> dict:
         if (type_data & 0b0001000) > 0:
             object_type = "spinner"
 
-        if object_type == "circle":
+        if object_type == "circle" or object_type == "spinner":
             hitobjects.append({
                 "x": int(x),
                 "y": int(y),
