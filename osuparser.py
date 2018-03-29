@@ -115,7 +115,8 @@ def parse_timingpoints(lines: [str]) -> dict:
     for line in lines:
         (offset, ms_per_beat, meter, _, _, _, _, _) = line.split(",")
         ms_per_beat = float(ms_per_beat)
-        if ms_per_beat < 0:
+        inherited = ms_per_beat < 0
+        if inherited:
             ms_per_beat = last_ms_per_beat / (-0.01 * ms_per_beat)
         else:
             last_ms_per_beat = ms_per_beat
@@ -123,9 +124,16 @@ def parse_timingpoints(lines: [str]) -> dict:
             "time": float(offset),
             "msPerBeat": ms_per_beat,
             "bpm": round(60 * 1000 / float(ms_per_beat), 2),
-            "meter": int(meter)
+            "meter": int(meter),
+            "inherited": inherited
         })
-    return {"TimingPoints": points}
+    max_bpm = max([p["bpm"] for p in points if not p["inherited"]])
+    min_bpm = min([p["bpm"] for p in points if not p["inherited"]])
+    return {
+        "TimingPoints": points,
+        "MaxBPM": max_bpm,
+        "MinBPM": min_bpm,
+    }
 
 
 def parse_colours(lines: [str]) -> dict:
@@ -134,6 +142,9 @@ def parse_colours(lines: [str]) -> dict:
 
 def parse_hitobjects(lines: [str]) -> dict:
     hitobjects = []
+    circlecount = 0
+    slidercount = 0
+    spinnercount = 0
     for line in lines:
         items = line.split(",")
         if(len(items) == 5):
@@ -142,12 +153,17 @@ def parse_hitobjects(lines: [str]) -> dict:
         else:
             (x, y, time, type_data, hitSounds, extras) = line.split(",", 5)
         type_data = int(type_data)
-        object_type = "circle"
+        if (type_data & 0b0000001) > 0:
+            object_type = "circle"
+            circlecount += 1
         if (type_data & 0b0000010) > 0:
             object_type = "slider"
+            slidercount += 1
         if (type_data & 0b0001000) > 0:
             object_type = "spinner"
-
+            spinnercount += 1
+        endx = int(x)
+        endy = int(y)
         if object_type == "circle" or object_type == "spinner":
             hitobjects.append({
                 "x": int(x),
@@ -156,17 +172,17 @@ def parse_hitobjects(lines: [str]) -> dict:
                 "type": object_type,
                 "newCombo": bool(type_data & 0x0000100),
                 "hitSounds": int(hitSounds),
-                "extras": extras
+                "extras": extras,
+                "endx": endx,
+                "endy": endy,
             })
         elif object_type == "slider":
             (slider_points, repeat, pixelLength, *_) = extras.split(",")
             (slider_type, *points) = slider_points.split("|")
             points = [p.split(":") for p in points]
-            points = [{"x": p[0], "y": p[1]} for p in points]
+            points = [{"x": int(p[0]), "y": int(p[1])} for p in points]
             repeat = int(repeat) - 1
             pixelLength = float(pixelLength)
-            endx = int(x)
-            endy = int(y)
             if repeat % 2 == 0:
                 endx = points[-1]["x"]
                 endy = points[-1]["y"]
@@ -184,7 +200,12 @@ def parse_hitobjects(lines: [str]) -> dict:
                 "repeat": repeat,
                 "length": pixelLength
             })
-    return {"HitObjects": hitobjects}
+    return {
+        "HitObjects": hitobjects,
+        "CircleCount": circlecount,
+        "SliderCount": slidercount,
+        "SpinnerCount": spinnercount,
+    }
 
 
 if __name__ == "__main__":
